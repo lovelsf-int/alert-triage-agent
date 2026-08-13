@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: alert-triage-agent
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:alert_agent}
+    username: ${PGUSER:alert_agent}
+    password: ${PGPASSWORD:alert_agent}
+    hikari:
+      maximum-pool-size: ${DB_MAX_POOL_SIZE:10}
+      minimum-idle: ${DB_MIN_IDLE:1}
+  ai:
+    model:
+      chat: openai
+      embedding:
+        text: dashscope
+    openai:
+      api-key: ${DEEPSEEK_API_KEY:}
+      chat:
+        base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+        completions-path: ${DEEPSEEK_COMPLETIONS_PATH:/chat/completions}
+        options:
+          model: ${DEEPSEEK_MODEL:deepseek-v4-flash}
+          temperature: ${DEEPSEEK_TEMPERATURE:0.1}
+          max-tokens: ${DEEPSEEK_MAX_TOKENS:2500}
+    dashscope:
+      api-key: ${AI_DASHSCOPE_API_KEY:}
+      chat:
+        enabled: false
+      embedding:
+        enabled: true
+        options:
+          model: ${EMBEDDING_MODEL:text-embedding-v4}
+          dimensions: ${EMBEDDING_DIMENSIONS:1024}
+          text-type: document
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        remove-existing-vector-store-table: false
+        schema-name: public
+        table-name: alert_knowledge
+        dimensions: ${EMBEDDING_DIMENSIONS:1024}
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        max-document-batch-size: ${RAG_INGEST_BATCH_SIZE:10}
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+alert-agent:
+  engine: ${ALERT_AGENT_ENGINE:react-agent}
+  human-review-threshold: ${HUMAN_REVIEW_THRESHOLD:0.85}
+  max-historical-cases: ${MAX_HISTORICAL_CASES:3}
+  max-policy-rules: ${MAX_POLICY_RULES:3}
+  rag:
+    similarity-threshold: ${RAG_SIMILARITY_THRESHOLD:0.35}
+    seed-on-startup: ${RAG_SEED_ON_STARTUP:true}
+    ingest-batch-size: ${RAG_INGEST_BATCH_SIZE:10}
+    embedding-model: ${EMBEDDING_MODEL:text-embedding-v4}
+    embedding-dimensions: ${EMBEDDING_DIMENSIONS:1024}
+    vector-store: pgvector
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.example.alertagent: INFO

@@ -1,0 +1,37 @@
+name: alert-triage-agent
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: alert-triage-pgvector
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-alert_agent}
+      POSTGRES_USER: ${PGUSER:-alert_agent}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-alert_agent}
+    ports:
+      - "${PGPORT:-5432}:5432"
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-alert_agent} -d ${PGDATABASE:-alert_agent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    profiles: ["app"]
+    build: .
+    container_name: alert-triage-agent
+    env_file:
+      - .env
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgvector-data:
