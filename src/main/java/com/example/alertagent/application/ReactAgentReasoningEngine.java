@@ -22,11 +22,19 @@ public class ReactAgentReasoningEngine implements ReasoningEngine {
 
     @Override
     public String reason(String userPrompt) {
-        AssistantMessage response = reactAgent.c\u0061ll(userPrompt);
-        if (response == null || response.getText() == null || response.getText().isBlank()) {
-            throw new IllegalStateException("Empty response");
+        try {
+            AssistantMessage response = reactAgent.c\u0061ll(userPrompt);
+            if (response == null || response.getText() == null || response.getText().isBlank()) {
+                throw new IllegalStateException("Empty response");
+            }
+            return response.getText();
         }
-        return response.getText();
+        catch (IllegalStateException exception) {
+            throw exception;
+        }
+        catch (Exception exception) {
+            throw new IllegalStateException("Agent execution failed", exception);
+        }
     }
 
     @Override
