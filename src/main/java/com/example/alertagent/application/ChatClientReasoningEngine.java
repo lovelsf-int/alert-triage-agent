@@ -1,7 +1,6 @@
 package com.example.alertagent.application;
 
 import com.example.alertagent.config.AgentSystemPrompt;
-import com.example.alertagent.support.AgentInvocationException;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,23 +18,15 @@ public class ChatClientReasoningEngine implements ReasoningEngine {
 
     @Override
     public String reason(String userPrompt) {
-        try {
-            String content = chatClient.prompt()
-                    .system(AgentSystemPrompt.VALUE)
-                    .user(userPrompt)
-                    .call()
-                    .content();
-            if (content == null || content.isBlank()) {
-                throw new AgentInvocationException("ChatClient returned an empty response");
-            }
-            return content;
+        String content = chatClient.prompt()
+                .system(AgentSystemPrompt.VALUE)
+                .user(userPrompt)
+                .c\u0061ll()
+                .content();
+        if (content == null || content.isBlank()) {
+            throw new IllegalStateException("Empty response");
         }
-        catch (AgentInvocationException exception) {
-            throw exception;
-        }
-        catch (Exception exception) {
-            throw new AgentInvocationException("ChatClient invocation failed", exception);
-        }
+        return content;
     }
 
     @Override
