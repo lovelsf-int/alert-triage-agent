@@ -1,7 +1,6 @@
 package com.example.alertagent.application;
 
 import com.example.alertagent.domain.AlertAssessment;
-import com.example.alertagent.support.AgentOutputException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -24,7 +23,7 @@ public class AgentOutputParser {
             return objectMapper.readValue(json, AlertAssessment.class);
         }
         catch (Exception exception) {
-            throw new AgentOutputException("Model output is not a valid AlertAssessment JSON", exception);
+            throw new IllegalStateException("Response payload could not be parsed", exception);
         }
     }
 }
