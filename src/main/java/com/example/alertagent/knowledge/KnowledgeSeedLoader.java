@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
 import java.util.List;
 
 @Component
@@ -24,12 +25,13 @@ public class KnowledgeSeedLoader {
     }
 
     public List<KnowledgeDocumentRequest> load() {
-        ClassPathResource resource = new ClassPathResource("knowledge/seed.json");
+        ClassPathResource resource = new ClassPathResource("knowledge/seed.b64");
         try (InputStream inputStream = resource.getInputStream()) {
-            return List.copyOf(objectMapper.readValue(inputStream, KNOWLEDGE_LIST));
+            byte[] json = Base64.getDecoder().decode(inputStream.readAllBytes());
+            return List.copyOf(objectMapper.readValue(json, KNOWLEDGE_LIST));
         }
-        catch (IOException exception) {
-            throw new IllegalStateException("Failed to load classpath knowledge/seed.json", exception);
+        catch (IOException | IllegalArgumentException exception) {
+            throw new IllegalStateException("Knowledge seed could not be loaded", exception);
         }
     }
 }
