@@ -1,4 +1,4 @@
-.PHONY: infra-up infra-down run test package demo search
+.PHONY: infra-up infra-down run test package
 
 infra-up:
 	docker compose up -d postgres
@@ -14,9 +14,3 @@ test:
 
 package:
 	mvn clean package
-
-demo:
-	bash scripts/demo.sh
-
-search:
-	bash scripts/search-knowledge.sh
