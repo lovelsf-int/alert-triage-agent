@@ -1,7 +1,6 @@
 package com.example.alertagent.application;
 
 import com.example.alertagent.domain.EnrichedAlertContext;
-import com.example.alertagent.support.AgentInvocationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
@@ -53,7 +52,7 @@ public class AgentPromptFactory {
                     """.formatted(contextJson);
         }
         catch (JsonProcessingException exception) {
-            throw new AgentInvocationException("Failed to serialize alert context", exception);
+            throw new IllegalStateException("Alert context could not be serialized", exception);
         }
     }
 }
