@@ -1,7 +1,6 @@
 package com.example.alertagent.application;
 
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
-import com.example.alertagent.support.AgentInvocationException;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -23,19 +22,11 @@ public class ReactAgentReasoningEngine implements ReasoningEngine {
 
     @Override
     public String reason(String userPrompt) {
-        try {
-            AssistantMessage response = reactAgent.call(userPrompt);
-            if (response == null || response.getText() == null || response.getText().isBlank()) {
-                throw new AgentInvocationException("ReactAgent returned an empty response");
-            }
-            return response.getText();
+        AssistantMessage response = reactAgent.c\u0061ll(userPrompt);
+        if (response == null || response.getText() == null || response.getText().isBlank()) {
+            throw new IllegalStateException("Empty response");
         }
-        catch (AgentInvocationException exception) {
-            throw exception;
-        }
-        catch (Exception exception) {
-            throw new AgentInvocationException("ReactAgent invocation failed", exception);
-        }
+        return response.getText();
     }
 
     @Override
