@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -25,7 +25,7 @@ class ApiModel(BaseModel):
     )
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -45,24 +45,24 @@ class AlertSeverity(str, Enum):
         return left if left.rank >= right.rank else right
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     TRUE_POSITIVE = "TRUE_POSITIVE"
     FALSE_POSITIVE = "FALSE_POSITIVE"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
 
 
-class EvidenceSourceType(str, Enum):
+class EvidenceSourceType(StrEnum):
     ALERT = "ALERT"
     HISTORICAL_CASE = "HISTORICAL_CASE"
     POLICY = "POLICY"
 
 
-class KnowledgeType(str, Enum):
+class KnowledgeType(StrEnum):
     HISTORICAL_CASE = "HISTORICAL_CASE"
     POLICY_RULE = "POLICY_RULE"
 
 
-class RunStatus(str, Enum):
+class RunStatus(StrEnum):
     RUNNING = "RUNNING"
     WAITING_FOR_REVIEW = "WAITING_FOR_REVIEW"
     COMPLETED = "COMPLETED"
