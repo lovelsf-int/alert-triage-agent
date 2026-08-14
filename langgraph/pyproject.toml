@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alert-triage-langgraph"
+version = "0.1.0"
+description = "Enterprise security alert triage workflow built with LangGraph, DeepSeek and pgvector"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { text = "Apache-2.0" }
+authors = [{ name = "alert-triage-agent contributors" }]
+dependencies = [
+  "fastapi==0.128.2",
+  "httpx==0.28.1",
+  "langchain-deepseek==1.1.0",
+  "langgraph==1.2.9",
+  "langgraph-checkpoint-postgres==3.1.0",
+  "psycopg[binary,pool]>=3.2.10,<4",
+  "pydantic==2.13.4",
+  "pydantic-settings==2.14.1",
+  "uvicorn[standard]==0.48.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9.0,<10",
+  "pytest-asyncio>=1.2,<2",
+  "ruff>=0.14,<1",
+]
+
+[project.scripts]
+alert-triage-langgraph = "alert_triage_langgraph.main:run"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+alert_triage_langgraph = ["resources/*.json"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["B008"]

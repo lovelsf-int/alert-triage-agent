@@ -1,0 +1,166 @@
+[
+  {
+    "type": "HISTORICAL_CASE",
+    "sourceId": "CASE-2026-001",
+    "title": "分布式暴力破解后账户被接管",
+    "content": "同一账户在短时间内遭遇多个来源 IP 的高频失败认证，随后出现成功登录。处置时冻结会话并核查登录后的敏感操作。",
+    "verdict": "TRUE_POSITIVE",
+    "keywords": [
+      "登录失败",
+      "暴力破解",
+      "异常 IP",
+      "账户",
+      "认证",
+      "成功登录"
+    ],
+    "recommendedActions": [
+      "终止可疑会话",
+      "要求账户重新认证",
+      "核查成功登录后的敏感操作"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "HISTORICAL_CASE",
+    "sourceId": "CASE-2026-002",
+    "title": "终端 PowerShell 恶意下载行为",
+    "content": "终端进程使用编码后的 PowerShell 命令下载可执行文件，并建立异常外联。最终确认为恶意程序落地。",
+    "verdict": "TRUE_POSITIVE",
+    "keywords": [
+      "PowerShell",
+      "编码命令",
+      "恶意",
+      "下载",
+      "进程",
+      "外联"
+    ],
+    "recommendedActions": [
+      "隔离终端",
+      "保全进程与网络证据",
+      "分析落堰文件"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "HISTORICAL_CASE",
+    "sourceId": "CASE-2026-003",
+    "title": "敏感数据批量外传",
+    "content": "业务账户在非工作时段下载大量敏感文件并向未授权外部地址传输。",
+    "verdict": "TRUE_POSITIVE",
+    "keywords": [
+      "敏感数据",
+      "批量下载",
+      "外传",
+      "大流量",
+      "非工作时段"
+    ],
+    "recommendedActions": [
+      "暂停相关凭据",
+      "核对外传数据范围",
+      "确认接收方和业务授权。"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "HISTORICAL_CASE",
+    "sourceId": "CASE-2026-004",
+    "title": "授权漏洞扫描器触发端口扫描告警",
+    "content": "资产扫描平台按变更单执行例行扫描，扫描源已登记且时间窗口匹配，研判为误报。",
+    "verdict": "FALSE_POSITIVE",
+    "keywords": [
+      "漏洞扫描",
+      "端口扫描",
+      "扫描器",
+      "白名单",
+      "变更单"
+    ],
+    "recommendedActions": [
+      "核对扫描源白名单",
+      "核验变更单时间窗口"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "POLICY_RULE",
+    "sourceId": "POL-AUTH-001",
+    "title": "异常认证与账户接管处置规范",
+    "content": "多个来源对同一账户高频失败认证并随后成功时，应核验成功登录来源、终止可疑会话，并检查后续敏感操作。",
+    "keywords": [
+      "登录失败",
+      "暴力破解",
+      "账户",
+      "认证",
+      "成功登录"
+    ],
+    "recommendedActions": [
+      "终止可疑会话",
+      "要求账户重新认证",
+      "核查成功登录后的敏感操作"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "POLICY_RULE",
+    "sourceId": "POL-ENDPOINT-002",
+    "title": "终端恶意代码事件处置规范",
+    "content": "发现可疑脚本下载、恶意进程或异常外联时，应先隔离终端，再保全进程、网络和文件证据。",
+    "keywords": [
+      "PowerShell",
+      "恶意",
+      "进程",
+      "下载",
+      "外联",
+      "终端"
+    ],
+    "recommendedActions": [
+      "隔离终端",
+      "保全进程与网络证据",
+      "进行恶意文件分析"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "POLICY_RULE",
+    "sourceId": "POL-DATA-003",
+    "title": "敏感数据异常访问与外传处置规范",
+    "content": "对异常批量下载和未授权外传，应停止相关凭据访问并核对数据范围、接收方与业务授权。",
+    "keywords": [
+      "敏感数据",
+      "批量下载",
+      "外传",
+      "未授权",
+      "大流量"
+    ],
+    "recommendedActions": [
+      "暂停相关凭据",
+      "核对外传数据范围",
+      "确认接收方和业务授权"
+    ],
+    "version": "1",
+    "active": true
+  },
+  {
+    "type": "POLICY_RULE",
+    "sourceId": "POL-GOV-004",
+    "title": "高风险告警人工复核规范",
+    "content": "CRITICAL 告警、证据不足告警以及低于自动决策置信度阈值的告警必须进入人工复核。",
+    "keywords": [
+      "CRITICAL",
+      "严重",
+      "证据不足",
+      "人工复核"
+    ],
+    "recommendedActions": [
+      "提交人工复核",
+      "保留完整研判证据"
+    ],
+    "version": "1",
+    "active": true
+  }
+]
