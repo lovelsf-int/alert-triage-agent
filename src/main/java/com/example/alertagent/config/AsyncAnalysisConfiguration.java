@@ -1,7 +1,6 @@
 package com.example.alertagent.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -13,7 +12,6 @@ import java.util.concurrent.ThreadFactory;
 
 @Configuration(proxyBeanMethods = false)
 @EnableScheduling
-@EnableConfigurationProperties(AsyncAnalysisProperties.class)
 public class AsyncAnalysisConfiguration {
 
     @Bean(name = "alertAnalysisVirtualThreadExecutor", destroyMethod = "close")

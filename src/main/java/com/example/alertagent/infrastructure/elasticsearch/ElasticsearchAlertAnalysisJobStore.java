@@ -143,32 +143,22 @@ public class ElasticsearchAlertAnalysisJobStore implements AlertAnalysisJobStore
                 Sort.by(Sort.Direction.ASC, "updatedAt")
         );
 
-        Set<String> ids = new LinkedHashSet<>();
-        addUntilLimit(
-                ids,
-                repository.findByStatus(AlertAnalysisJobStatus.PENDING, pageable),
-                limit
-        );
-        addUntilLimit(
-                ids,
-                repository.findByStatusAndNextRetryAtLessThanEqual(
-                        AlertAnalysisJobStatus.RETRY_WAIT,
-                        now,
-                        pageable
-                ),
-                limit
-        );
-        addUntilLimit(
-                ids,
+        List<AlertAnalysisJobDocument> expiredRunning =
                 repository.findByStatusAndLeaseUntilLessThanEqual(
                         AlertAnalysisJobStatus.RUNNING,
                         now,
                         pageable
-                ),
-                limit
-        );
+                );
+        List<AlertAnalysisJobDocument> dueRetries =
+                repository.findByStatusAndNextRetryAtLessThanEqual(
+                        AlertAnalysisJobStatus.RETRY_WAIT,
+                        now,
+                        pageable
+                );
+        List<AlertAnalysisJobDocument> pending =
+                repository.findByStatus(AlertAnalysisJobStatus.PENDING, pageable);
 
-        return ids.stream().limit(limit).toList();
+        return mergeFairly(limit, expiredRunning, dueRetries, pending);
     }
 
     private Optional<AlertAnalysisJob> transition(
@@ -208,17 +198,30 @@ public class ElasticsearchAlertAnalysisJobStore implements AlertAnalysisJobStore
         return Optional.empty();
     }
 
-    private void addUntilLimit(
-            Set<String> target,
-            List<AlertAnalysisJobDocument> documents,
-            int limit
+    @SafeVarargs
+    private final List<String> mergeFairly(
+            int limit,
+            List<AlertAnalysisJobDocument>... groups
     ) {
-        for (AlertAnalysisJobDocument document : documents) {
-            if (target.size() >= limit) {
-                return;
+        Set<String> ids = new LinkedHashSet<>();
+        int offset = 0;
+        boolean foundCandidate;
+
+        do {
+            foundCandidate = false;
+            for (List<AlertAnalysisJobDocument> group : groups) {
+                if (offset < group.size()) {
+                    foundCandidate = true;
+                    ids.add(group.get(offset).getAlertId());
+                    if (ids.size() >= limit) {
+                        return List.copyOf(ids);
+                    }
+                }
             }
-            target.add(document.getAlertId());
-        }
+            offset++;
+        } while (foundCandidate);
+
+        return List.copyOf(ids);
     }
 
     private AlertAnalysisJobDocument toDocument(

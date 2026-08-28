@@ -8,6 +8,7 @@ import com.example.alertagent.domain.AlertAnalysisResponse;
 import com.example.alertagent.domain.AlertAnalysisSubmissionResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -45,7 +46,11 @@ public class AlertAnalysisController {
 
     @GetMapping("/{alertId}")
     public AlertAnalysisJobView getAnalysisJob(
-            @PathVariable @NotBlank @Size(max = 128) String alertId
+            @PathVariable
+            @NotBlank
+            @Size(max = 128)
+            @Pattern(regexp = "^[A-Za-z0-9._:-]+$")
+            String alertId
     ) {
         return asyncAlertAnalysisService.get(alertId);
     }
