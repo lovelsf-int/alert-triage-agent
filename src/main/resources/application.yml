@@ -10,6 +10,10 @@ spring:
     hikari:
       maximum-pool-size: ${DB_MAX_POOL_SIZE:10}
       minimum-idle: ${DB_MIN_IDLE:1}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    connection-timeout: ${ELASTICSEARCH_CONNECTION_TIMEOUT:3s}
+    socket-timeout: ${ELASTICSEARCH_SOCKET_TIMEOUT:30s}
   ai:
     model:
       chat: openai
@@ -54,6 +58,15 @@ alert-agent:
   human-review-threshold: ${HUMAN_REVIEW_THRESHOLD:0.85}
   max-historical-cases: ${MAX_HISTORICAL_CASES:3}
   max-policy-rules: ${MAX_POLICY_RULES:3}
+  async:
+    max-in-flight: ${ALERT_ANALYSIS_MAX_IN_FLIGHT:64}
+    lease: ${ALERT_ANALYSIS_LEASE:90s}
+    max-attempts: ${ALERT_ANALYSIS_MAX_ATTEMPTS:5}
+    base-retry-delay: ${ALERT_ANALYSIS_BASE_RETRY_DELAY:2s}
+    max-retry-delay: ${ALERT_ANALYSIS_MAX_RETRY_DELAY:5m}
+    recovery-batch-size: ${ALERT_ANALYSIS_RECOVERY_BATCH_SIZE:200}
+    recovery-interval-ms: ${ALERT_ANALYSIS_RECOVERY_INTERVAL_MS:5000}
+    optimistic-retries: ${ALERT_ANALYSIS_OPTIMISTIC_RETRIES:5}
   rag:
     similarity-threshold: ${RAG_SIMILARITY_THRESHOLD:0.35}
     seed-on-startup: ${RAG_SEED_ON_STARTUP:true}

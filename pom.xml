@@ -13,9 +13,9 @@
 
     <groupId>com.example</groupId>
     <artifactId>alert-triage-agent</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
     <name>alert-triage-agent</name>
-    <description>Enterprise security alert triage Agent with vector RAG, Spring AI Alibaba and DeepSeek</description>
+    <description>Enterprise security alert triage Agent with vector RAG, virtual threads and Elasticsearch job persistence</description>
 
     <properties>
         <java.version>21</java.version>
@@ -61,6 +61,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
         </dependency>
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
