@@ -1,5 +1,6 @@
 package com.example.alertagent.api;
 
+import com.example.alertagent.application.AlertAnalysisJobNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -40,6 +41,17 @@ public class GlobalExceptionHandler {
         );
         problem.setTitle("Invalid request parameter");
         problem.setType(URI.create("urn:problem:invalid-request-parameter"));
+        return problem;
+    }
+
+    @ExceptionHandler(AlertAnalysisJobNotFoundException.class)
+    public ProblemDetail handleAnalysisJobNotFound(AlertAnalysisJobNotFoundException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
+        problem.setTitle("Analysis job not found");
+        problem.setType(URI.create("urn:problem:analysis-job-not-found"));
         return problem;
     }
 

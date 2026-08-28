@@ -1,6 +1,7 @@
 package com.example.alertagent.domain;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
@@ -9,7 +10,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public record AlertAnalysisRequest(
-        @NotBlank @Size(max = 128) String alertId,
+        @NotBlank
+        @Size(max = 128)
+        @Pattern(
+                regexp = "^[A-Za-z0-9._:-]+$",
+                message = "must contain only letters, digits, dot, underscore, colon or hyphen"
+        )
+        String alertId,
         @NotBlank @Size(max = 128) String alertType,
         @NotBlank @Size(max = 512) String title,
         @NotBlank @Size(max = 12000) String description,
