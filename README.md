@@ -2,6 +2,22 @@
 
 面向企业安全运营的防御性告警研判示例。V0.3 在原有 pgvector RAG 与 DeepSeek 研判链路之上，加入 Elasticsearch 持久化任务状态和 Java 21 虚拟线程异步执行能力。
 
+## 架构总览
+
+```mermaid
+flowchart LR
+    Client[告警调用方] --> API[Alert Analysis API]
+    API -->|CREATE PENDING| ES[(Elasticsearch)]
+    API --> Dispatcher[Semaphore Dispatcher]
+    Dispatcher --> VT[Java 21 Virtual Thread]
+    VT --> Worker[AI Analysis Worker]
+    Worker --> RAG[(PostgreSQL + pgvector)]
+    Worker --> LLM[DeepSeek]
+    Worker -->|SUCCEEDED / RETRY_WAIT / DEAD| ES
+    Recovery[Recovery Scheduler] -->|PENDING / 到期重试 / 过期租约| ES
+    Recovery --> Dispatcher
+```
+
 ```text
 POST 告警
   -> Elasticsearch CREATE(PENDING)
@@ -14,23 +30,33 @@ POST 告警
   -> ES 乐观锁回写(SUCCEEDED / RETRY_WAIT / DEAD)
 ```
 
-Elasticsearch 保存的是可恢复的任务状态，不使用 `@Transactional` 伪装跨资源事务。应用在“ES 已写入、线程尚未启动”或“AI 正在执行时”宕机后，恢复扫描会重新调度 `PENDING`、到期的 `RETRY_WAIT` 和租约过期的 `RUNNING` 任务。
+Elasticsearch 保存可恢复的任务状态，不使用 `@Transactional` 伪装跨资源事务。应用在“ES 已写入、线程尚未启动”或“AI 正在执行时”宕机后，恢复扫描会重新调度 `PENDING`、到期的 `RETRY_WAIT` 和租约过期的 `RUNNING` 任务。
+
+## 文档导航
+
+- [完整架构设计](docs/architecture.md)：总体架构、组件职责、状态机、部署拓扑、一致性、容量和安全边界；
+- [完整时序图](docs/sequence-diagrams.md)：正常研判、重复提交、多实例抢占、宕机恢复、旧结果拒绝和重试；
+- [部署与故障处理手册](docs/operations-runbook.md)：配置、容量、监控告警、发布、回滚和故障处理；
+- [演进路线](docs/evolution-roadmap.md)：V0.2 到 V1.0 的版本规划；
+- [文档索引](docs/README.md)：推荐阅读顺序。
+
+所有图使用 Mermaid 保存并由 GitHub 按矢量图渲染，放大后不会出现位图模糊，也便于与代码一起评审和维护。
 
 ## 主要能力
 
-- Java 21 虚拟线程执行阻塞式 RAG 与模型调用
-- `Semaphore` 独立限制 AI 在途并发，避免无限打满下游
-- Elasticsearch 固定业务 ID 与 `op_type=create`，重复提交不产生重复文档
-- `SeqNoPrimaryTerm` 乐观锁保护状态迁移
-- `runId + lease` 防止旧任务覆盖新任务
-- 指数退避重试、最大尝试次数和 `DEAD` 终态
-- 定时恢复应用宕机、线程丢失及超时任务
-- 保留同步接口，便于调试与兼容旧调用方
-- DeepSeek OpenAI-compatible Chat API
-- DashScope `text-embedding-v4`
-- PostgreSQL + pgvector + HNSW + cosine distance
-- 历史案例、制度规则 Metadata 隔离
-- Retrieval Trace 与人工复核治理
+- Java 21 虚拟线程执行阻塞式 RAG 与模型调用；
+- `Semaphore` 独立限制 AI 在途并发，避免无限打满下游；
+- Elasticsearch 固定业务 ID 与 `op_type=create`，重复提交不产生重复文档；
+- `SeqNoPrimaryTerm` 乐观锁保护状态迁移；
+- `runId + lease` 防止旧任务覆盖新任务；
+- 指数退避重试、最大尝试次数和 `DEAD` 终态；
+- 定时恢复应用宕机、线程丢失及超时任务；
+- 保留同步接口，便于调试与兼容旧调用方；
+- DeepSeek OpenAI-compatible Chat API；
+- DashScope `text-embedding-v4`；
+- PostgreSQL + pgvector + HNSW + cosine distance；
+- 历史案例、制度规则 Metadata 隔离；
+- Retrieval Trace 与人工复核治理。
 
 ## 技术栈
 
@@ -110,7 +136,7 @@ curl -i -X POST 'http://localhost:8080/api/v1/alert-analyses' \
 }
 ```
 
-重复提交同一个 `alertId` 不会覆盖已有任务；返回中的 `created` 会变为 `false`。
+重复提交同一个 `alertId` 不会覆盖已有任务；返回中的 `created` 会变为 `false`。同一个 `alertId` 被视为同一个不可变任务，需要重新研判时应使用新的任务 ID。
 
 ### 2. 查询任务状态与结果
 
@@ -120,10 +146,10 @@ curl 'http://localhost:8080/api/v1/alert-analyses/EVENT-001'
 
 状态可能为：
 
-- `PENDING`：已经持久化，等待调度。
-- `RUNNING`：某个 Worker 已持有租约并执行研判。
-- `RETRY_WAIT`：临时失败，等待退避时间到达。
-- `SUCCEEDED`：研判成功，`result` 包含完整结果。
+- `PENDING`：已经持久化，等待调度；
+- `RUNNING`：某个 Worker 已持有租约并执行研判；
+- `RETRY_WAIT`：临时失败，等待退避时间到达；
+- `SUCCEEDED`：研判成功，`result` 包含完整结果；
 - `DEAD`：超过最大尝试次数，需要人工检查。
 
 ### 3. 同步研判兼容接口
@@ -159,9 +185,9 @@ curl -X POST 'http://localhost:8080/api/v1/knowledge/reindex-seed'
 
 ### 如何避免任务丢失
 
-1. 告警先以 `PENDING` 写入 ES。
-2. 只有持久化成功后才尝试创建虚拟线程。
-3. 没有并发名额时，任务继续留在 `PENDING`。
+1. 告警先以 `PENDING` 写入 ES；
+2. 只有持久化成功后才尝试创建虚拟线程；
+3. 没有并发名额时，任务继续留在 `PENDING`；
 4. 恢复扫描会重新提交未完成任务。
 
 ### 如何避免多实例重复有效执行
@@ -178,7 +204,7 @@ curl -X POST 'http://localhost:8080/api/v1/knowledge/reindex-seed'
 |---|---:|---|
 | `ELASTICSEARCH_URIS` | `http://localhost:9200` | ES 节点地址 |
 | `ALERT_ANALYSIS_MAX_IN_FLIGHT` | `64` | 单实例最大 AI 在途任务数 |
-| `ALERT_ANALYSIS_LEASE` | `90s` | RUNNING 租约，应大于模型硬超时 |
+| `ALERT_ANALYSIS_LEASE` | `90s` | RUNNING 租约，应大于完整研判链路硬超时 |
 | `ALERT_ANALYSIS_MAX_ATTEMPTS` | `5` | 最大执行次数 |
 | `ALERT_ANALYSIS_BASE_RETRY_DELAY` | `2s` | 首次退避 |
 | `ALERT_ANALYSIS_MAX_RETRY_DELAY` | `5m` | 最大退避 |
@@ -204,13 +230,8 @@ mvn clean verify
 
 ## 安全边界
 
-- 项目只生成研判结果和处置建议，不自动执行高风险动作。
-- 检索由 Java 确定执行，模型不能跳过案例或制度召回。
-- 输入告警按不可信内容处理，不能改变系统角色或权限。
-- 模型输出经过 JSON 解析、字段校验和治理规则二次校验。
+- 项目只生成研判结果和处置建议，不自动执行高风险动作；
+- 检索由 Java 确定执行，模型不能跳过案例或制度召回；
+- 输入告警按不可信内容处理，不能改变系统角色或权限；
+- 模型输出经过 JSON 解析、字段校验和治理规则二次校验；
 - 生产环境仍需补充租户隔离、权限控制、脱敏、审计和人工审批。
-
-设计文档：
-
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/evolution-roadmap.md`](docs/evolution-roadmap.md)
